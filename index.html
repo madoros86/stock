@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>오늘의 증시 — 상위 종목 &amp; 시황</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0e14;
+    --surface:#12161f;
+    --surface-2:#181d29;
+    --border:#232a38;
+    --text:#e8e6e1;
+    --text-dim:#8b92a3;
+    --up:#ff4d4f;
+    --down:#3b82f6;
+    --amber:#d4a657;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Noto Sans KR', sans-serif;
+    padding-bottom:60px;
+  }
+  header{
+    padding:28px 24px 20px;
+    max-width:920px;
+    margin:0 auto;
+  }
+  header h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 4px;
+    letter-spacing:-0.01em;
+  }
+  header p{
+    color:var(--text-dim);
+    font-size:13px;
+    margin:0;
+  }
+  #banner{
+    max-width:920px;
+    margin:0 auto 16px;
+    padding:0 24px;
+  }
+  #banner span{
+    display:none;
+    background:var(--surface-2);
+    border:1px solid var(--amber);
+    color:var(--amber);
+    font-size:12px;
+    padding:6px 12px;
+    border-radius:4px;
+  }
+  .ticker-wrap{
+    overflow:hidden;
+    border-top:1px solid var(--border);
+    border-bottom:1px solid var(--border);
+    background:var(--surface);
+    margin-bottom:24px;
+  }
+  .ticker-track{
+    display:flex;
+    white-space:nowrap;
+    padding:10px 0;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+  }
+  .ticker-item{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding:0 22px;
+    border-right:1px solid var(--border);
+  }
+  .ticker-item .name{color:var(--text); font-weight:500;}
+  main{
+    max-width:920px;
+    margin:0 auto;
+    padding:0 24px;
+  }
+  .tabs{
+    display:flex;
+    gap:4px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:16px;
+  }
+  .tab-btn{
+    background:none;
+    border:none;
+    color:var(--text-dim);
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:14px;
+    font-weight:500;
+    padding:10px 16px;
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+  }
+  .tab-btn.active{color:var(--text); border-bottom-color:var(--amber);}
+  .panel{display:none;}
+  .panel.active{display:block;}
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  thead th{
+    text-align:right;
+    font-weight:400;
+    color:var(--text-dim);
+    font-size:12px;
+    padding:6px 8px;
+    border-bottom:1px solid var(--border);
+  }
+  thead th:nth-child(1),thead th:nth-child(2){text-align:left;}
+  tbody td{padding:9px 8px; font-family:'IBM Plex Mono', monospace; text-align:right;}
+  tbody td:nth-child(2){font-family:'Noto Sans KR', sans-serif; text-align:left; color:#7fb2e5; cursor:pointer;}
+  tbody td:nth-child(1){color:var(--text-dim); text-align:left;}
+  tbody tr.row{border-top:1px solid var(--border); cursor:pointer;}
+  tbody tr.row:hover{background:var(--surface);}
+  tr.news-row td{
+    background:var(--surface);
+    text-align:left;
+    font-family:'Noto Sans KR', sans-serif;
+    font-size:12px;
+    color:var(--text-dim);
+    padding:2px 8px 12px 28px;
+  }
+  tr.news-row a{color:var(--text-dim); text-decoration:none; display:block; padding:4px 0;}
+  tr.news-row a:hover{color:var(--text);}
+  .up{color:var(--up);}
+  .down{color:var(--down);}
+  .high-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:10px;}
+  .high-card{background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:12px 14px; cursor:pointer;}
+  .high-card .top{display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;}
+  .high-card .name{font-size:14px; font-weight:500; color:#7fb2e5;}
+  .badge{font-size:11px; background:rgba(212,166,87,0.15); color:var(--amber); padding:2px 7px; border-radius:4px;}
+  .high-card .price{font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--text-dim);}
+  .high-card .news{display:none; margin-top:8px; padding-top:8px; border-top:1px solid var(--border); font-size:12px;}
+  .high-card .news a{color:var(--text-dim); text-decoration:none; display:block; padding:2px 0;}
+  .news-cols{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+  .news-cols h3{font-size:12px; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-dim); font-weight:500; margin:0 0 10px;}
+  .news-cols a{display:block; color:var(--text); text-decoration:none; font-size:13px; padding:9px 0; border-top:1px solid var(--border);}
+  .news-cols a:hover{color:var(--amber);}
+  .caption{font-size:12px; color:var(--text-dim); margin:10px 2px 0;}
+  @media (max-width:600px){
+    .news-cols{grid-template-columns:1fr;}
+    thead th:nth-child(4){display:none;}
+    tbody td:nth-child(4){display:none;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>오늘의 증시</h1>
+  <p id="updated">데이터 불러오는 중…</p>
+</header>
+
+<div id="banner"><span id="banner-text">Apps Script 연결 전 — 샘플 데이터로 미리보기 중입니다</span></div>
+
+<div class="ticker-wrap"><div class="ticker-track" id="ticker"></div></div>
+
+<main>
+  <div class="tabs">
+    <button class="tab-btn active" data-tab="value">거래대금 top30</button>
+    <button class="tab-btn" data-tab="change">등락률 top30</button>
+    <button class="tab-btn" data-tab="high">52주 신고가</button>
+    <button class="tab-btn" data-tab="etf">ETF</button>
+    <button class="tab-btn" data-tab="marketnews">시황 뉴스</button>
+  </div>
+
+  <div class="panel active" id="panel-value">
+    <table>
+      <thead><tr><th>#</th><th>종목명</th><th>현재가</th><th>등락률</th><th>거래대금</th></tr></thead>
+      <tbody id="value-body"></tbody>
+    </table>
+    <p class="caption">종목명을 누르면 관련 뉴스가 펼쳐집니다</p>
+  </div>
+
+  <div class="panel" id="panel-change">
+    <table>
+      <thead><tr><th>#</th><th>종목명</th><th>현재가</th><th>등락률</th></tr></thead>
+      <tbody id="change-body"></tbody>
+    </table>
+    <p class="caption">종목명을 누르면 관련 뉴스가 펼쳐집니다</p>
+  </div>
+
+  <div class="panel" id="panel-high">
+    <div class="high-grid" id="high-grid"></div>
+  </div>
+
+  <div class="panel" id="panel-etf">
+    <table>
+      <thead><tr><th>#</th><th>종목명</th><th>현재가</th><th>등락률</th></tr></thead>
+      <tbody id="etf-body"></tbody>
+    </table>
+  </div>
+
+  <div class="panel" id="panel-marketnews">
+    <div class="news-cols">
+      <div><h3>국내</h3><div id="news-kr"></div></div>
+      <div><h3>미국</h3><div id="news-us"></div></div>
+    </div>
+  </div>
+</main>
+
+<script>
+// 이 URL을 Apps Script 웹 앱 배포 후 나오는 주소로 바꿔주세요.
+// 예: https://script.google.com/macros/s/AKfycb.../exec
+const WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxug2I5spFvqfVIWU5M9twqbUSVrFSF_nkXk_MnTm4MkrgelL8fixNnnm_7ybRs_EMv/exec';
+
+const SAMPLE_DATA = {
+  updatedAt: new Date().toISOString(),
+  indices: [
+    {지수명:'KOSPI', 값:'2,681.44', 등락률:'0.62'},
+    {지수명:'KOSDAQ', 값:'812.07', 등락률:'-0.31'},
+    {지수명:'다우존스', 값:'44,910', 등락률:'0.18'},
+    {지수명:'나스닥', 값:'19,820', 등락률:'1.04'},
+    {지수명:'S&P500', 값:'6,340', 등락률:'0.45'}
+  ],
+  tradingValue: [
+    {순위:1, 종목코드:'005930', 종목명:'삼성전자', 현재가:'71,200', 등락률:'1.8', 거래대금:'12,000'},
+    {순위:2, 종목코드:'000660', 종목명:'SK하이닉스', 현재가:'184,300', 등락률:'-0.6', 거래대금:'11,050'},
+    {순위:3, 종목코드:'373220', 종목명:'LG에너지솔루션', 현재가:'397,800', 등락률:'2.3', 거래대금:'10,100'},
+    {순위:4, 종목코드:'035420', 종목명:'NAVER', 현재가:'211,300', 등락률:'0.4', 거래대금:'9,150'}
+  ],
+  changeRate: [
+    {순위:1, 종목코드:'042700', 종목명:'한미반도체', 현재가:'118,000', 등락률:'29.8'},
+    {순위:2, 종목코드:'086520', 종목명:'에코프로', 현재가:'96,300', 등락률:'24.1'},
+    {순위:3, 종목코드:'196170', 종목명:'알테오젠', 현재가:'432,000', 등락률:'19.5'}
+  ],
+  weekHigh52: [
+    {순위:1, 종목코드:'012330', 종목명:'현대모비스', 현재가:'276,000', 등락률:'3.1'},
+    {순위:2, 종목코드:'207940', 종목명:'삼성바이오로직스', 현재가:'988,000', 등락률:'2.4'}
+  ],
+  etf: [
+    {순위:1, 종목코드:'069500', 종목명:'KODEX 200', 현재가:'40,050', 등락률:'0.62'},
+    {순위:2, 종목코드:'233740', 종목명:'KODEX 코스닥150레버리지', 현재가:'7,155', 등락률:'-0.42'}
+  ],
+  news:{
+    tradingValue:[
+      {종목코드:'005930', 종목명:'삼성전자', 뉴스제목:'HBM4 양산 일정 조기화 소식에 강세', 링크:'#'},
+      {종목코드:'005930', 종목명:'삼성전자', 뉴스제목:'파운드리 수율 개선 기대감 확산', 링크:'#'},
+      {종목코드:'000660', 종목명:'SK하이닉스', 뉴스제목:'엔비디아향 HBM 공급 확대 전망', 링크:'#'}
+    ],
+    changeRate:[
+      {종목코드:'042700', 종목명:'한미반도체', 뉴스제목:'HBM 본딩 장비 신규 수주', 링크:'#'}
+    ],
+    weekHigh52:[
+      {종목코드:'012330', 종목명:'현대모비스', 뉴스제목:'전동화 부품 수주 잔고 확대', 링크:'#'}
+    ]
+  },
+  marketNews:{
+    kr:[
+      {제목:'외국인 순매수 전환, 코스피 2,680선 회복', 링크:'#'},
+      {제목:'반도체 업종 강세, 수출 호조 기대감 반영', 링크:'#'}
+    ],
+    us:[
+      {제목:'연준 위원 발언에 국채금리 하락', 링크:'#'},
+      {제목:'빅테크 실적 발표 앞두고 나스닥 상승', 링크:'#'}
+    ]
+  }
+};
+
+function fmtPct(v){
+  const n = parseFloat(String(v).replace('%',''));
+  if (isNaN(n)) return {text:v, cls:''};
+  const cls = n < 0 ? 'down' : 'up';
+  const text = (n > 0 ? '+' : '') + n.toFixed(2) + '%';
+  return {text, cls};
+}
+
+function newsMapFrom(list){
+  const map = {};
+  (list || []).forEach(n => {
+    const code = n['종목코드'];
+    if (!map[code]) map[code] = [];
+    map[code].push(n);
+  });
+  return map;
+}
+
+function renderTicker(indices){
+  const el = document.getElementById('ticker');
+  const items = (indices || []).map(d => {
+    const p = fmtPct(d['등락률']);
+    return `<span class="ticker-item"><span class="name">${d['지수명']}</span><span>${d['값']}</span><span class="${p.cls}">${p.cls==='up'?'▲':'▼'} ${Math.abs(parseFloat(d['등락률'])||0).toFixed(2)}%</span></span>`;
+  }).join('');
+  el.innerHTML = items + items;
+  let pos = 0;
+  setInterval(() => {
+    pos -= 0.6;
+    if (pos <= -el.scrollWidth/2) pos = 0;
+    el.style.transform = `translateX(${pos}px)`;
+  }, 30);
+}
+
+function renderStockTable(bodyId, rows, newsMap, showAmount){
+  const body = document.getElementById(bodyId);
+  body.innerHTML = rows.map((r, i) => {
+    const code = r['종목코드'];
+    const p = fmtPct(r['등락률']);
+    const rowId = bodyId + '-news-' + i;
+    const news = newsMap[code] || [];
+    const amountCell = showAmount ? `<td>${r['거래대금']||''}억</td>` : '';
+    const newsHtml = news.length
+      ? news.map(n => `<a href="${n['링크']}" target="_blank" rel="noopener">${n['뉴스제목']}</a>`).join('')
+      : '<span style="opacity:.6">관련 뉴스가 없습니다</span>';
+    return `<tr class="row" onclick="document.getElementById('${rowId}').style.display = document.getElementById('${rowId}').style.display==='table-row'?'none':'table-row'">
+        <td>${r['순위']}</td><td>${r['종목명']}</td><td>${r['현재가']}</td><td class="${p.cls}">${p.text}</td>${amountCell}
+      </tr>
+      <tr class="news-row" id="${rowId}" style="display:none;"><td colspan="5">${newsHtml}</td></tr>`;
+  }).join('');
+}
+
+function renderHighGrid(rows, newsMap){
+  const grid = document.getElementById('high-grid');
+  grid.innerHTML = rows.map((r, i) => {
+    const code = r['종목코드'];
+    const news = newsMap[code] || [];
+    const id = 'high-news-' + i;
+    const newsHtml = news.length
+      ? news.map(n => `<a href="${n['링크']}" target="_blank" rel="noopener">${n['뉴스제목']}</a>`).join('')
+      : '<span style="opacity:.6">관련 뉴스가 없습니다</span>';
+    return `<div class="high-card" onclick="var n=document.getElementById('${id}'); n.style.display = n.style.display==='block'?'none':'block';">
+        <div class="top"><span class="name">${r['종목명']}</span><span class="badge">신고가</span></div>
+        <div class="price">${r['현재가']}원</div>
+        <div class="news" id="${id}">${newsHtml}</div>
+      </div>`;
+  }).join('');
+}
+
+function renderMarketNews(kr, us){
+  const link = n => `<a href="${n['링크']}" target="_blank" rel="noopener">${n['제목']}</a>`;
+  document.getElementById('news-kr').innerHTML = (kr||[]).map(link).join('');
+  document.getElementById('news-us').innerHTML = (us||[]).map(link).join('');
+}
+
+function render(data){
+  document.getElementById('updated').textContent = '업데이트: ' + new Date(data.updatedAt).toLocaleString('ko-KR');
+  renderTicker(data.indices);
+  renderStockTable('value-body', data.tradingValue || [], newsMapFrom(data.news && data.news.tradingValue), true);
+  renderStockTable('change-body', data.changeRate || [], newsMapFrom(data.news && data.news.changeRate), false);
+  renderStockTable('etf-body', data.etf || [], {}, false);
+  renderHighGrid(data.weekHigh52 || [], newsMapFrom(data.news && data.news.weekHigh52));
+  renderMarketNews(data.marketNews && data.marketNews.kr, data.marketNews && data.marketNews.us);
+}
+
+function loadJSONP(url){
+  return new Promise((resolve, reject) => {
+    const callbackName = 'jsonpCallback_' + Date.now();
+    const timeoutId = setTimeout(() => {
+      cleanup();
+      reject(new Error('JSONP timeout'));
+    }, 15000);
+    function cleanup(){
+      delete window[callbackName];
+      if (script.parentNode) script.parentNode.removeChild(script);
+      clearTimeout(timeoutId);
+    }
+    window[callbackName] = (data) => { cleanup(); resolve(data); };
+    const script = document.createElement('script');
+    script.src = url + (url.indexOf('?') > -1 ? '&' : '?') + 'callback=' + callbackName;
+    script.onerror = () => { cleanup(); reject(new Error('JSONP load failed')); };
+    document.body.appendChild(script);
+  });
+}
+
+async function load(){
+  if (!WEBAPP_URL || WEBAPP_URL.indexOf('PASTE_YOUR') === 0){
+    document.getElementById('banner-text').style.display = 'inline-block';
+    render(SAMPLE_DATA);
+    return;
+  }
+  try{
+    const data = await loadJSONP(WEBAPP_URL);
+    render(data);
+  }catch(err){
+    document.getElementById('banner-text').style.display = 'inline-block';
+    document.getElementById('banner-text').textContent = '데이터를 불러오지 못해 샘플 데이터로 표시 중입니다';
+    render(SAMPLE_DATA);
+  }
+}
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+load();
+</script>
+</body>
+</html>
